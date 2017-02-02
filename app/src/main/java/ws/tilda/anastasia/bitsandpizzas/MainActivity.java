@@ -5,10 +5,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ListView;
 import android.widget.ShareActionProvider;
 
 public class MainActivity extends Activity {
     private ShareActionProvider shareActionProvider;
+    private String[] titles;
+    private ListView drawerList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
