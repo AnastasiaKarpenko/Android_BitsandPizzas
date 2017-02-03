@@ -6,6 +6,7 @@ import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -19,6 +20,7 @@ public class MainActivity extends Activity {
     private String[] titles;
     private ListView drawerList;
     private DrawerLayout drawerLayout;
+    private ActionBarDrawerToggle drawerToggle;
 
     private class DrawerItemClickListener implements ListView.OnItemClickListener {
 
@@ -27,7 +29,6 @@ public class MainActivity extends Activity {
             //Code to run when an item in the navigation drawer gets clicked
             selectItem(position);
         }
-
     }
 
     @Override
@@ -46,7 +47,33 @@ public class MainActivity extends Activity {
             selectItem(0);
         }
 
+        //Creation of ActionBarDrawerToggle
+        drawerToggle = new ActionBarDrawerToggle(this, drawerLayout,
+                R.string.open_drawer, R.string.close_drawer) {
+
+            public void onDrawerClosed(View view) {
+                super.onDrawerClosed(view);
+                invalidateOptionsMenu();
+            }
+
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                invalidateOptionsMenu();
+            }
+        };
+
+        //This method is depreciated, use another
+        //drawerLayout.setDrawerListener(drawerToggle);
+        drawerLayout.addDrawerListener(drawerToggle);
      }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        boolean drawerOpen = drawerLayout.isDrawerOpen(drawerList);
+        menu.findItem(R.id.action_share).setVisible(!drawerOpen);
+
+        return super.onPrepareOptionsMenu(menu);
+    }
 
     private void selectItem(int position) {
         Fragment fragment;

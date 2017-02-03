@@ -24,7 +24,7 @@ public class StoresFragment extends ListFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        ArrayAdapter adapter = new ArrayAdapter(
+        ArrayAdapter <String>adapter = new ArrayAdapter<String>(
                 inflater.getContext(),
                 android.R.layout.simple_list_item_1,
                 getResources().getStringArray(R.array.stores));
