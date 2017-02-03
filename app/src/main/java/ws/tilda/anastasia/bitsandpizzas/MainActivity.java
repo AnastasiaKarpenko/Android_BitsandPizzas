@@ -22,6 +22,7 @@ public class MainActivity extends Activity {
     private ListView drawerList;
     private DrawerLayout drawerLayout;
     private ActionBarDrawerToggle drawerToggle;
+    private int currentPosition = 0;
 
     private class DrawerItemClickListener implements ListView.OnItemClickListener {
 
@@ -70,6 +71,13 @@ public class MainActivity extends Activity {
         //To enable the Up Button
         getActionBar().setDisplayHomeAsUpEnabled(true);
         getActionBar().setHomeButtonEnabled(true);
+
+        if(savedInstanceState != null) {
+            currentPosition = savedInstanceState.getInt("position");
+            setActionBarTitle(currentPosition);
+        } else {
+            selectItem(0);
+        }
      }
 
     @Override
@@ -82,6 +90,7 @@ public class MainActivity extends Activity {
 
     private void selectItem(int position) {
         Fragment fragment;
+        currentPosition = position;
 
         switch(position) {
             case 1:
@@ -172,5 +181,12 @@ public class MainActivity extends Activity {
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt("position", currentPosition);
+
     }
 }
