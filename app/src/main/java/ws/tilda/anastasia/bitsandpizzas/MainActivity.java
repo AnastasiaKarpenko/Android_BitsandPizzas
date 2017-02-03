@@ -2,6 +2,7 @@ package ws.tilda.anastasia.bitsandpizzas;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -17,6 +18,7 @@ import android.widget.ListView;
 import android.widget.ShareActionProvider;
 
 public class MainActivity extends Activity {
+
     private ShareActionProvider shareActionProvider;
     private String[] titles;
     private ListView drawerList;
@@ -41,12 +43,17 @@ public class MainActivity extends Activity {
         drawerList = (ListView) findViewById(R.id.drawer);
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 
-        //To fill in ListView
+        //To initialize (fill in) the  ListView
         drawerList.setAdapter(new ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_1, titles));
         drawerList.setOnItemClickListener(new DrawerItemClickListener());
-        if(savedInstanceState == null) {
-            selectItem(0);
+
+        //Save instance of previous activity
+        if (savedInstanceState != null) {
+            currentPosition = savedInstanceState.getInt("position");
+            setActionBarTitle(currentPosition);
+        } else {
+            selectItem(0); //top fragment is default
         }
 
         //Creation of ActionBarDrawerToggle
@@ -64,33 +71,40 @@ public class MainActivity extends Activity {
             }
         };
 
-        //This method is depreciated, use another
-        //drawerLayout.setDrawerListener(drawerToggle);
         drawerLayout.addDrawerListener(drawerToggle);
 
         //To enable the Up Button
         getActionBar().setDisplayHomeAsUpEnabled(true);
         getActionBar().setHomeButtonEnabled(true);
 
-        if(savedInstanceState != null) {
-            currentPosition = savedInstanceState.getInt("position");
-            setActionBarTitle(currentPosition);
-        } else {
-            selectItem(0);
-        }
-     }
+        //If back stack changes
+        getFragmentManager().addOnBackStackChangedListener(
+                new FragmentManager.OnBackStackChangedListener() {
+                    @Override
+                    public void onBackStackChanged() {
+                        FragmentManager fragMan = getFragmentManager();
+                        Fragment fragment = fragMan.findFragmentByTag("visible_fragment");
+                        if (fragment instanceof TopFragment) {
+                            currentPosition = 0;
+                        } else if (fragment instanceof PizzaFragment) {
+                            currentPosition = 1;
+                        } else if (fragment instanceof PastaFragment) {
+                            currentPosition = 2;
+                        } else if (fragment instanceof StoresFragment) {
+                            currentPosition = 3;
+                        }
 
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        boolean drawerOpen = drawerLayout.isDrawerOpen(drawerList);
-        menu.findItem(R.id.action_share).setVisible(!drawerOpen);
-
-        return super.onPrepareOptionsMenu(menu);
+                        setActionBarTitle(currentPosition); //type right text on action bar
+                        drawerList.setItemChecked(currentPosition, true); //check the choice in drawer
+                    }
+                }
+        );
     }
 
+    //This method works when the user selects the variant from the drawer list
     private void selectItem(int position) {
-        Fragment fragment;
         currentPosition = position;
+        Fragment fragment;
 
         switch(position) {
             case 1:
@@ -108,7 +122,7 @@ public class MainActivity extends Activity {
         }
 
         FragmentTransaction ft = getFragmentManager().beginTransaction();
-        ft.replace(R.id.content_frame, fragment);
+        ft.replace(R.id.content_frame, fragment, "visible_fragment");
         ft.addToBackStack(null);
         ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
         ft.commit();
@@ -119,6 +133,38 @@ public class MainActivity extends Activity {
         //Closing drawer
         drawerLayout.closeDrawer(drawerList);
     }
+
+    //If drawer is opened "sharing option" will not be visible
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        boolean drawerOpen = drawerLayout.isDrawerOpen(drawerList);
+        menu.findItem(R.id.action_share).setVisible(!drawerOpen);
+
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    //To sync the toggle to put it in the right position after creation of activity
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        drawerToggle.syncState();
+    }
+
+    //If configuration changed, toggle should know about it
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        drawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    //Save the current position if the activity is killed
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt("position", currentPosition);
+
+    }
+
 
     public void setActionBarTitle(int position) {
         String title;
@@ -131,6 +177,7 @@ public class MainActivity extends Activity {
         getActionBar().setTitle(title);
     }
 
+    //Put items from menu file to the action bar
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
@@ -148,27 +195,15 @@ public class MainActivity extends Activity {
         shareActionProvider.setShareIntent(intent);
     }
 
-    //To sync the toggle to put it in the right position after creation of activity
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        drawerToggle.syncState();
-    }
-
-    //If configuration changed, toggle should know about it
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        drawerToggle.onConfigurationChanged(newConfig);
-    }
-
+    //This method is called when the user clicks on the element in action bar
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        //If the user clicks on the drawerToggle
         if(drawerToggle.onOptionsItemSelected(item)) {
             return true;
         }
 
+        //If the user clicks on the other options on Action bar
         switch(item.getItemId()) {
             case R.id.action_create_order:
                 Intent intent = new Intent(this, OrderActivity.class);
@@ -181,12 +216,5 @@ public class MainActivity extends Activity {
             default:
                 return super.onOptionsItemSelected(item);
         }
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putInt("position", currentPosition);
-
     }
 }
